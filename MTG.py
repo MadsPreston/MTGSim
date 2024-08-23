@@ -1,5 +1,4 @@
 import tkinter.filedialog
-import csv
 
 def openfile():
     filename = tkinter.filedialog.askopenfile(mode='r')
@@ -16,7 +15,19 @@ def importDeck():
 
 def main():
     deck = importDeck()
-    print(deck.split('\n'))
+    deck = deck.split('\n')
+    deck = list(filter(None, deck))
+    newDeck = []
+    for card in deck:
+        cardProperties = card.split()
+        quantity = cardProperties[0]
+        cardName = ' '.join(cardProperties[1:])
+        card = [quantity, cardName]
+        newDeck.append(card)
+    deck = newDeck
+    print(deck)
+
+
 
 
 main()
