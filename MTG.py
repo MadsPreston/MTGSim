@@ -1,4 +1,5 @@
 import tkinter.filedialog
+import random
 
 def openfile():
     filename = tkinter.filedialog.askopenfile(mode='r')
@@ -25,14 +26,23 @@ def parseDeck(deck):
     return newDeck
 
 def draw7(deck):
-    return "Unfinished"
+    i = 0
+    hand = []
+    while i < 7:
+        card = random.choice(deck)
+        hand.append(card)
+        deck.remove(card)
+        i += 1
+    return deck, hand
+
+
 
 def main():
     deck = importDeck()
     deck = parseDeck(deck)
-    draw7(deck)
-
-    print(deck)
+    print(len(deck))
+    deck, hand = draw7(deck)
+    print(hand, len(deck), deck)
 
 
 
