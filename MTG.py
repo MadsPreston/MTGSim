@@ -1,12 +1,13 @@
 import tkinter.filedialog
 import random
 from requests import get
+import requests
 from json import loads
 from shutil import copyfileobj
 import pygame
 
 def openfile():
-    filename = tkinter.filedialog.askopenfile(mode='r')
+    filename = tkinter.filedialog.askopenfile(mode="r")
     return filename.name
 
 def readDeck(fileName):
@@ -43,8 +44,25 @@ def draw7(deck):
         i += 1
     return deck, hand
 
+def getCardFromApi(cardName):
+    response = requests.get(f"https://api.scryfall.com/cards/search?q={cardName}")
+    data = response.json()
+    return data["data"][0]
+
+
+cache = {}
+
+
 def getCardInfo(cardName):
-    return loads(get(f"https://api.scryfall.com/cards/search?q={cardName}").text)
+    if cardName in cache:
+        return cache[cardName]
+    else:
+        data = getCardFromApi(cardName)
+        cache[cardName] = data
+        return data
+
+def getCardPiece(cardName, piece):
+    return getCardInfo(cardName)[piece]
 
 def main():
     pygame.init()
@@ -57,12 +75,12 @@ def main():
     deck = shuffle(deck)
     deck, hand = draw7(deck)
     print(hand)
+    print(getCardPiece(hand[0], "name"))
 
     images = []
     cards = []
     image1 = pygame.image.load("C:/Users/maddy/Downloads/Black Lotus.jpg").convert()
     card1 = image1.get_rect()
-
 
     images.append(image1)
     cards.append(card1)
@@ -89,4 +107,6 @@ def main():
                     active_box = None
 
         pygame.display.flip()
+
+
 main()
