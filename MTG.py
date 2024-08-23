@@ -1,14 +1,14 @@
-import tkinter.filedialog
 import random
-from requests import get
-import requests
-from json import loads
-from shutil import copyfileobj
+import tkinter.filedialog
+
 import pygame
+import requests
+
 
 def openfile():
     filename = tkinter.filedialog.askopenfile(mode="r")
     return filename.name
+
 
 def readDeck(fileName):
     f = open(fileName, "r")
@@ -16,23 +16,27 @@ def readDeck(fileName):
     f.close()
     return deck
 
+
 def importDeck():
     return readDeck(openfile())
 
+
 def parseDeck(deck):
-    deck = deck.split('\n')
+    deck = deck.split("\n")
     deck = list(filter(None, deck))
     newDeck = []
     for card in deck:
         cardProperties = card.split()
         quantity = int(cardProperties[0])
-        cardName = ' '.join(cardProperties[1:])
+        cardName = " ".join(cardProperties[1:])
         newDeck.extend([cardName] * quantity)
     return newDeck
+
 
 def shuffle(deck):
     random.shuffle(deck)
     return deck
+
 
 def draw7(deck):
     i = 0
@@ -43,6 +47,7 @@ def draw7(deck):
         deck.remove(card)
         i += 1
     return deck, hand
+
 
 def getCardFromApi(cardName):
     response = requests.get(f"https://api.scryfall.com/cards/search?q={cardName}")
@@ -61,8 +66,10 @@ def getCardInfo(cardName):
         cache[cardName] = data
         return data
 
+
 def getCardPiece(cardName, piece):
     return getCardInfo(cardName)[piece]
+
 
 def main():
     pygame.init()
@@ -90,13 +97,16 @@ def main():
     while True:
         screen.fill("blue")
 
-        pygame.draw.rect(screen, 'purple', card1)
+        pygame.draw.rect(screen, "purple", card1)
         screen.blit(image1, card1)
 
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    for num, box, in enumerate(cards):
+                    for (
+                        num,
+                        box,
+                    ) in enumerate(cards):
                         if box.collidepoint(event.pos):
                             active_box = num
             if event.type == pygame.MOUSEMOTION:
