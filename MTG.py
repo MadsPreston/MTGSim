@@ -6,8 +6,7 @@ import requests
 
 
 def openfile():
-    filename = tkinter.filedialog.askopenfile(mode="r")
-    return filename.name
+    return tkinter.filedialog.askopenfilename()
 
 
 def readDeck(fileName):
