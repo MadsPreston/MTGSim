@@ -25,11 +25,15 @@ def parseDeck(deck):
         newDeck.extend([cardName] * quantity)
     return newDeck
 
+def shuffle(deck):
+    random.shuffle(deck)
+    return deck
+
 def draw7(deck):
     i = 0
     hand = []
     while i < 7:
-        card = random.choice(deck)
+        card = deck[0]
         hand.append(card)
         deck.remove(card)
         i += 1
@@ -40,9 +44,9 @@ def draw7(deck):
 def main():
     deck = importDeck()
     deck = parseDeck(deck)
-    print(len(deck))
+    deck = shuffle(deck)
     deck, hand = draw7(deck)
-    print(hand, len(deck), deck)
+    print(hand)
 
 
 
