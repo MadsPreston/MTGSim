@@ -6,7 +6,9 @@ import requests
 
 
 def openfile():
-    return tkinter.filedialog.askopenfilename()
+    return tkinter.filedialog.askopenfilename(
+        title="Select Your Deck", filetypes=[("Text files", "*.txt")]
+    )
 
 
 def readDeck(fileName):
