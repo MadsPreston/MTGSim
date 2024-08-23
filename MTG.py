@@ -1,5 +1,8 @@
 import tkinter.filedialog
 import random
+from requests import get
+from json import loads
+from shutil import copyfileobj
 
 def openfile():
     filename = tkinter.filedialog.askopenfile(mode='r')
@@ -39,7 +42,8 @@ def draw7(deck):
         i += 1
     return deck, hand
 
-
+def getCardInfo(cardName):
+    return loads(get(f"https://api.scryfall.com/cards/search?q={cardName}").text)
 
 def main():
     deck = importDeck()
@@ -47,8 +51,6 @@ def main():
     deck = shuffle(deck)
     deck, hand = draw7(deck)
     print(hand)
-
-
-
+    print(getCardInfo(hand[0]))
 
 main()
