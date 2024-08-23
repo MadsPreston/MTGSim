@@ -3,6 +3,7 @@ import random
 from requests import get
 from json import loads
 from shutil import copyfileobj
+import pygame
 
 def openfile():
     filename = tkinter.filedialog.askopenfile(mode='r')
@@ -46,11 +47,46 @@ def getCardInfo(cardName):
     return loads(get(f"https://api.scryfall.com/cards/search?q={cardName}").text)
 
 def main():
+    pygame.init()
+
+    screen = pygame.display.set_mode((800, 500))
+    pygame.display.set_caption("MTGSim")
+
     deck = importDeck()
     deck = parseDeck(deck)
     deck = shuffle(deck)
     deck, hand = draw7(deck)
     print(hand)
-    print(getCardInfo(hand[0]))
 
+    images = []
+    cards = []
+    image1 = pygame.image.load("C:/Users/maddy/Downloads/Black Lotus.jpg").convert()
+    card1 = image1.get_rect()
+
+
+    images.append(image1)
+    cards.append(card1)
+
+    active_box = None
+
+    while True:
+        screen.fill("blue")
+
+        pygame.draw.rect(screen, 'purple', card1)
+        screen.blit(image1, card1)
+
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    for num, box, in enumerate(cards):
+                        if box.collidepoint(event.pos):
+                            active_box = num
+            if event.type == pygame.MOUSEMOTION:
+                if active_box != None:
+                    cards[active_box].move_ip(event.rel)
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    active_box = None
+
+        pygame.display.flip()
 main()
