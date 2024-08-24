@@ -40,10 +40,10 @@ def shuffle(deck):
     return deck
 
 
-def draw7(deck):
+def drawX(deck, num):
     i = 0
     hand = []
-    while i < 7:
+    while i < num:
         card = deck[0]
         hand.append(card)
         deck.remove(card)
@@ -89,12 +89,19 @@ def main():
     deck = import_deck()
     deck = parse_deck(deck)
     deck = shuffle(deck)
-    deck, hand = draw7(deck)
+    deck, hand = drawX(deck, 7)
     print(hand)
     print(get_card_part(hand[0], "name"))
 
     images = []
     cards = []
+
+    cardBack = pygame.image.load("C:/Users/maddy/Documents/GitHub/MTGSim/CardBack.jpg").convert()
+    library = cardBack.get_rect()
+
+    images.append(cardBack)
+    cards.append(library)
+
     for card in hand:
         image = pygame.image.load(
             (BytesIO(get_card_image(card, "small").content))
@@ -109,6 +116,9 @@ def main():
     while True:
         screen.fill("blue")
 
+        pygame.draw.rect(screen, "purple", library)
+        screen.blit(cardBack, library)
+
         for i in range(len(cards)):
             pygame.draw.rect(screen, "purple", cards[i])
             screen.blit(images[i], cards[i])
@@ -122,6 +132,16 @@ def main():
                     ) in enumerate(cards):
                         if box.collidepoint(event.pos):
                             active_box = num
+                if event.button == 3:
+                    deck, hand = drawX(deck, 1)
+                    card = hand[len(hand)-1]
+                    image = pygame.image.load(
+                        (BytesIO(get_card_image(card, "small").content))
+                    ).convert()
+                    card = image.get_rect()
+
+                    images.append(image)
+                    cards.append(card)
             if event.type == pygame.MOUSEMOTION:
                 if active_box is not None:
                     cards[active_box].move_ip(event.rel)
