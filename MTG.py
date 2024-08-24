@@ -79,6 +79,15 @@ def get_card_image(card_name, size):
     return requests.get(card_url)
 
 
+def render_card(card, images, cards):
+    image = pygame.image.load(
+        (BytesIO(get_card_image(card, "small").content))
+    ).convert()
+    card = image.get_rect()
+    images.append(image)
+    cards.append(card)
+
+
 def main():
     pygame.init()
 
@@ -94,20 +103,14 @@ def main():
     images = []
     cards = []
 
-    cardBack = pygame.image.load("CardBack.jpg").convert()
-    library = cardBack.get_rect()
+    card_back = pygame.image.load("CardBack.jpg").convert()
+    library = card_back.get_rect()
 
-    images.append(cardBack)
+    images.append(card_back)
     cards.append(library)
 
     for card in hand:
-        image = pygame.image.load(
-            (BytesIO(get_card_image(card, "small").content))
-        ).convert()
-        card = image.get_rect()
-
-        images.append(image)
-        cards.append(card)
+        render_card(card, images, cards)
 
     active_box = None
 
@@ -115,7 +118,7 @@ def main():
         screen.fill("blue")
 
         pygame.draw.rect(screen, "purple", library)
-        screen.blit(cardBack, library)
+        screen.blit(card_back, library)
 
         for i in range(len(cards)):
             pygame.draw.rect(screen, "purple", cards[i])
@@ -133,13 +136,8 @@ def main():
                 if event.button == 3:
                     deck, hand = drawX(deck, 1)
                     card = hand[len(hand) - 1]
-                    image = pygame.image.load(
-                        (BytesIO(get_card_image(card, "small").content))
-                    ).convert()
-                    card = image.get_rect()
+                    render_card(card, images, cards)
 
-                    images.append(image)
-                    cards.append(card)
             if event.type == pygame.MOUSEMOTION:
                 if active_box is not None:
                     cards[active_box].move_ip(event.rel)
