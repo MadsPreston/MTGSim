@@ -75,7 +75,8 @@ def get_card_part(card_name, part):
 def main():
     pygame.init()
 
-    screen = pygame.display.set_mode((800, 500))
+    info_object = pygame.display.Info()
+    screen = pygame.display.set_mode((info_object.current_w, info_object.current_h))
     pygame.display.set_caption("MTGSim")
 
     deck = import_deck()
