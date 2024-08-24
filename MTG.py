@@ -157,12 +157,21 @@ def get_card_image(card_name, size, face_index=None):
         # Single face
         image_url = get_card_part(card_name, "image_uris", size)
     else:
-        # Multi faced
+        # Multi-faced
         image_url = get_card_part(
             card_name, "card_faces", face_index, "image_uris", size
         )
 
-    return requests.get(image_url)
+    if image_url:
+        response = requests.get(image_url)
+        if response.status_code == 200:
+            return response
+        else:
+            print(f"Failed to fetch image. Status code: {response.status_code}")
+            return None
+    else:
+        print(f"Image URL for {card_name} is None")
+        return None
 
 
 def add_card(card_name, image, cards, face_index=None):
