@@ -1,38 +1,44 @@
-import tkinter.filedialog
 import random
-from requests import get
-import requests
-from json import loads
-from shutil import copyfileobj
+import tkinter.filedialog
+from io import BytesIO
+
 import pygame
+import requests
 
-def openfile():
-    filename = tkinter.filedialog.askopenfile(mode="r")
-    return filename.name
 
-def readDeck(fileName):
-    f = open(fileName, "r")
+def pick_file():
+    return tkinter.filedialog.askopenfilename(
+        title="Select Your Deck", filetypes=[("Text files", "*.txt")]
+    )
+
+
+def read_deck(filename):
+    f = open(filename, "r")
     deck = f.read()
     f.close()
     return deck
 
-def importDeck():
-    return readDeck(openfile())
 
-def parseDeck(deck):
-    deck = deck.split('\n')
+def import_deck():
+    return read_deck(pick_file())
+
+
+def parse_deck(deck):
+    deck = deck.split("\n")
     deck = list(filter(None, deck))
-    newDeck = []
+    new_deck = []
     for card in deck:
-        cardProperties = card.split()
-        quantity = int(cardProperties[0])
-        cardName = ' '.join(cardProperties[1:])
-        newDeck.extend([cardName] * quantity)
-    return newDeck
+        card_properties = card.split()
+        quantity = int(card_properties[0])
+        card_name = " ".join(card_properties[1:])
+        new_deck.extend([card_name] * quantity)
+    return new_deck
+
 
 def shuffle(deck):
     random.shuffle(deck)
     return deck
+
 
 def draw7(deck):
     i = 0
@@ -44,8 +50,9 @@ def draw7(deck):
         i += 1
     return deck, hand
 
-def getCardFromApi(cardName):
-    response = requests.get(f"https://api.scryfall.com/cards/search?q={cardName}")
+
+def get_card_from_api(card_name):
+    response = requests.get(f"https://api.scryfall.com/cards/search?q={card_name}")
     data = response.json()
     return data["data"][0]
 
@@ -53,33 +60,43 @@ def getCardFromApi(cardName):
 cache = {}
 
 
-def getCardInfo(cardName):
-    if cardName in cache:
-        return cache[cardName]
+def get_card_info(card_name):
+    if card_name in cache:
+        return cache[card_name]
     else:
-        data = getCardFromApi(cardName)
-        cache[cardName] = data
+        data = get_card_from_api(card_name)
+        cache[card_name] = data
         return data
 
-def getCardPiece(cardName, piece):
-    return getCardInfo(cardName)[piece]
+
+def get_card_part(card_name, part):
+    return get_card_info(card_name)[part]
+
+
+def get_card_image(card_name, size):
+    card_url = get_card_info(card_name)["image_uris"][size]
+    return requests.get(card_url)
+
 
 def main():
     pygame.init()
 
-    screen = pygame.display.set_mode((800, 500))
+    info_object = pygame.display.Info()
+    screen = pygame.display.set_mode((info_object.current_w, info_object.current_h))
     pygame.display.set_caption("MTGSim")
 
-    deck = importDeck()
-    deck = parseDeck(deck)
+    deck = import_deck()
+    deck = parse_deck(deck)
     deck = shuffle(deck)
     deck, hand = draw7(deck)
     print(hand)
-    print(getCardPiece(hand[0], "name"))
+    print(get_card_part(hand[0], "name"))
 
     images = []
     cards = []
-    image1 = pygame.image.load("C:/Users/maddy/Downloads/Black Lotus.jpg").convert()
+    image1 = pygame.image.load(
+        (BytesIO(get_card_image(hand[0], "normal").content))
+    ).convert()
     card1 = image1.get_rect()
 
     images.append(image1)
@@ -90,17 +107,20 @@ def main():
     while True:
         screen.fill("blue")
 
-        pygame.draw.rect(screen, 'purple', card1)
+        pygame.draw.rect(screen, "purple", card1)
         screen.blit(image1, card1)
 
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    for num, box, in enumerate(cards):
+                    for (
+                        num,
+                        box,
+                    ) in enumerate(cards):
                         if box.collidepoint(event.pos):
                             active_box = num
             if event.type == pygame.MOUSEMOTION:
-                if active_box != None:
+                if active_box is not None:
                     cards[active_box].move_ip(event.rel)
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
