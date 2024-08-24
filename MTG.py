@@ -152,9 +152,10 @@ def main():
 
                 # Draw cards when right-clicking on deck
                 if event.button == 3:
-                    deck, hand = drawX(deck, 1)
-                    card = hand[len(hand) - 1]
-                    render_card(card, cards)
+                    if cards[0]["rect"].collidepoint(event.pos):
+                        deck, hand = drawX(deck, 1)
+                        card = hand[len(hand) - 1]
+                        render_card(card, cards)
 
             if event.type == pygame.MOUSEMOTION:
                 if active_box is not None:
