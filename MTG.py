@@ -140,44 +140,72 @@ def get_card_part(card_name, *parts):
     return data
 
 
-def get_card_image(card_name, size):
+def get_card_image(card_name, size, face_index=None):
     """
     Fetches the image of a card from the Scryfall API based on the card name and image size.
 
     Args:
         card_name (str): The name of the card.
         size (str): The size of the image ("small", "normal", "large", "png", "art_crop", "border_crop").
+        face_index (int, optional): The index of the face to fetch,
+        if the card has multiple faces.
 
     Returns:
         The HTTP response object containing the image.
     """
-    card_url = get_card_part(card_name, "image_uris", size)
-    return requests.get(card_url)
+    if face_index is None:
+        # Single face
+        image_url = get_card_part(card_name, "image_uris", size)
+    else:
+        # Multi faced
+        image_url = get_card_part(
+            card_name, "card_faces", face_index, "image_uris", size
+        )
+
+    return requests.get(image_url)
 
 
-def add_card(image, cards):
+def add_card(card_name, image, cards, face_index=None):
     """
     Adds a card dictionary to the list of cards.
 
     Args:
+        card_name (str): Name of the card being added
         image (Surface): The image of the card.
         cards (list): The list to which the card information will be added.
+        face_index (int, optional): The index of the face being shown,
+        if the card has multiple faces.
     """
-    cards.append({"image": image, "rect": image.get_rect(), "rotated": False})
+    cards.append(
+        {
+            "card_name": card_name,
+            "image": image,
+            "rect": image.get_rect(),
+            "rotated": False,
+            "face_index": face_index,
+        }
+    )
 
 
-def fetch_and_add_card(card, cards):
+def fetch_and_add_card(card_name, cards):
     """
     Fetches a card image and adds a card dictionary to the list of cards.
 
     Args:
-        card (str): The name of the card.
+        card_name (str): The name of the card.
         cards (list): The list to which the card information will be added.
     """
+    card_info = get_card_info(card_name)
+    if "card_faces" in card_info:
+        # Multiple faces, begin with first face
+        face_index = 0
+    else:
+        # Single face
+        face_index = None
     image = pygame.image.load(
-        (BytesIO(get_card_image(card, "small").content))
+        (BytesIO(get_card_image(card_name, "small", face_index).content))
     ).convert()
-    add_card(image, cards)
+    add_card(card_name, image, cards, face_index)
 
 
 def main():
@@ -198,7 +226,7 @@ def main():
     cards = []
 
     # Add the library image to the list of cards
-    add_card(pygame.image.load("CardBack.jpg").convert(), cards)
+    add_card("Library", pygame.image.load("CardBack.jpg").convert(), cards)
 
     # Fetch images and add all cards in hand to cards list
     for card in hand:
