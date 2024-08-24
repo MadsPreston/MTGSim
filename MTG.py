@@ -1,5 +1,6 @@
 import random
 import tkinter.filedialog
+from io import BytesIO
 
 import pygame
 import requests
@@ -72,6 +73,11 @@ def get_card_part(card_name, part):
     return get_card_info(card_name)[part]
 
 
+def get_card_image(card_name, size):
+    card_url = get_card_info(card_name)["image_uris"][size]
+    return requests.get(card_url)
+
+
 def main():
     pygame.init()
 
@@ -88,7 +94,9 @@ def main():
 
     images = []
     cards = []
-    image1 = pygame.image.load("C:/Users/maddy/Downloads/Black Lotus.jpg").convert()
+    image1 = pygame.image.load(
+        (BytesIO(get_card_image(hand[0], "normal").content))
+    ).convert()
     card1 = image1.get_rect()
 
     images.append(image1)
@@ -112,7 +120,7 @@ def main():
                         if box.collidepoint(event.pos):
                             active_box = num
             if event.type == pygame.MOUSEMOTION:
-                if active_box != None:
+                if active_box is not None:
                     cards[active_box].move_ip(event.rel)
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
