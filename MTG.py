@@ -79,6 +79,17 @@ def get_card_image(card_name, size):
     return requests.get(card_url)
 
 
+def add_card(image, cards):
+    cards.append({"image": image, "rect": image.get_rect(), "rotated": False})
+
+
+def render_card(card, cards):
+    image = pygame.image.load(
+        (BytesIO(get_card_image(card, "small").content))
+    ).convert()
+    add_card(image, cards)
+
+
 def main():
     pygame.init()
 
@@ -91,58 +102,63 @@ def main():
     deck = shuffle(deck)
     deck, hand = drawX(deck, 7)
 
-    images = []
     cards = []
 
-    cardBack = pygame.image.load("CardBack.jpg").convert()
-    library = cardBack.get_rect()
-
-    images.append(cardBack)
-    cards.append(library)
+    add_card(pygame.image.load("CardBack.jpg").convert(), cards)
 
     for card in hand:
-        image = pygame.image.load(
-            (BytesIO(get_card_image(card, "small").content))
-        ).convert()
-        card = image.get_rect()
-
-        images.append(image)
-        cards.append(card)
+        render_card(card, cards)
 
     active_box = None
 
     while True:
         screen.fill("blue")
 
-        pygame.draw.rect(screen, "purple", library)
-        screen.blit(cardBack, library)
-
-        for i in range(len(cards)):
-            pygame.draw.rect(screen, "purple", cards[i])
-            screen.blit(images[i], cards[i])
+        for card in cards:
+            pygame.draw.rect(screen, "purple", card["rect"])
+            screen.blit(card["image"], card["rect"])
 
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
+                # Click and drag cards
                 if event.button == 1:
                     for (
                         num,
-                        box,
+                        card,
                     ) in enumerate(cards):
-                        if box.collidepoint(event.pos):
+                        if card["rect"].collidepoint(event.pos):
                             active_box = num
+                # Turn cards on middle-click
+                if event.button == 2:
+                    for num, card in enumerate(cards):
+                        if card["rect"].collidepoint(event.pos):
+                            if num == 0:
+                                # Do not turn library card
+                                continue
+                            if card["rotated"]:
+                                card["image"] = pygame.transform.rotate(
+                                    card["image"], 90
+                                )
+                                card["rotated"] = False
+                            else:
+                                card["image"] = pygame.transform.rotate(
+                                    card["image"], -90
+                                )
+                                card["rotated"] = True
+                            # Update bounding box
+                            card["rect"] = card["image"].get_rect(
+                                center=card["rect"].center
+                            )
+
+                # Draw cards when right-clicking on deck
                 if event.button == 3:
                     deck, hand = drawX(deck, 1)
                     card = hand[len(hand) - 1]
-                    image = pygame.image.load(
-                        (BytesIO(get_card_image(card, "small").content))
-                    ).convert()
-                    card = image.get_rect()
+                    render_card(card, cards)
 
-                    images.append(image)
-                    cards.append(card)
             if event.type == pygame.MOUSEMOTION:
                 if active_box is not None:
-                    cards[active_box].move_ip(event.rel)
+                    cards[active_box]["rect"].move_ip(event.rel)
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     active_box = None
