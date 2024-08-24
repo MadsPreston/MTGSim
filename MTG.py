@@ -52,9 +52,10 @@ def draw7(deck):
 
 
 def get_card_from_api(card_name):
-    response = requests.get(f"https://api.scryfall.com/cards/search?q={card_name}")
+    card_name = card_name.replace(" ", "+")
+    response = requests.get(f"https://api.scryfall.com/cards/named/?exact={card_name}")
     data = response.json()
-    return data["data"][0]
+    return data
 
 
 cache = {}
@@ -94,21 +95,23 @@ def main():
 
     images = []
     cards = []
-    image1 = pygame.image.load(
-        (BytesIO(get_card_image(hand[0], "normal").content))
-    ).convert()
-    card1 = image1.get_rect()
+    for card in hand:
+        image = pygame.image.load(
+            (BytesIO(get_card_image(card, "small").content))
+        ).convert()
+        card = image.get_rect()
 
-    images.append(image1)
-    cards.append(card1)
+        images.append(image)
+        cards.append(card)
 
     active_box = None
 
     while True:
         screen.fill("blue")
 
-        pygame.draw.rect(screen, "purple", card1)
-        screen.blit(image1, card1)
+        for i in range(len(cards)):
+            pygame.draw.rect(screen, "purple", cards[i])
+            screen.blit(images[i], cards[i])
 
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
