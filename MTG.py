@@ -217,6 +217,28 @@ def fetch_and_add_card(card_name, cards):
     add_card(card_name, image, cards, face_index)
 
 
+def flip_card(card):
+    """Flips a card by changing its face_index and replacing the image.
+
+    Args:
+        card (dict): A dictionary representing a card.
+    """
+    # Check if there even are multiple faces
+    if "card_faces" not in get_card_info(card["card_name"]):
+        return
+    # Get either 0 or 1, whichever face_index isn't currently
+    card["face_index"] = (card["face_index"] + 1) % 2
+    image = pygame.image.load(
+        (
+            BytesIO(
+                get_card_image(card["card_name"], "small", card["face_index"]).content
+            )
+        )
+    ).convert()
+    card["image"] = image
+    card["rect"] = card["image"].get_rect(center=card["rect"].center)
+
+
 def main():
     pygame.init()
 
@@ -292,6 +314,16 @@ def main():
                         deck, hand = drawX(deck, 1)
                         card = hand[len(hand) - 1]
                         fetch_and_add_card(card, cards)
+
+                if event.button == 5:  # Scroll down
+                    for num in reversed(
+                        range(len(cards))
+                    ):  # Reverse range to handle top-most card first
+                        card = cards[num]
+                        if card["rect"].collidepoint(event.pos):
+                            if num == 0:  # Ignore library card
+                                continue
+                            flip_card(card)
 
             if event.type == pygame.MOUSEMOTION:
                 if active_box is not None:
