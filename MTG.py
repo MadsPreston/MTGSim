@@ -5,33 +5,33 @@ import pygame
 import requests
 
 
-def openfile():
+def pick_file():
     return tkinter.filedialog.askopenfilename(
         title="Select Your Deck", filetypes=[("Text files", "*.txt")]
     )
 
 
-def readDeck(fileName):
-    f = open(fileName, "r")
+def read_deck(filename):
+    f = open(filename, "r")
     deck = f.read()
     f.close()
     return deck
 
 
-def importDeck():
-    return readDeck(openfile())
+def import_deck():
+    return read_deck(pick_file())
 
 
-def parseDeck(deck):
+def parse_deck(deck):
     deck = deck.split("\n")
     deck = list(filter(None, deck))
-    newDeck = []
+    new_deck = []
     for card in deck:
-        cardProperties = card.split()
-        quantity = int(cardProperties[0])
-        cardName = " ".join(cardProperties[1:])
-        newDeck.extend([cardName] * quantity)
-    return newDeck
+        card_properties = card.split()
+        quantity = int(card_properties[0])
+        card_name = " ".join(card_properties[1:])
+        new_deck.extend([card_name] * quantity)
+    return new_deck
 
 
 def shuffle(deck):
@@ -50,8 +50,8 @@ def draw7(deck):
     return deck, hand
 
 
-def getCardFromApi(cardName):
-    response = requests.get(f"https://api.scryfall.com/cards/search?q={cardName}")
+def get_card_from_api(card_name):
+    response = requests.get(f"https://api.scryfall.com/cards/search?q={card_name}")
     data = response.json()
     return data["data"][0]
 
@@ -59,17 +59,17 @@ def getCardFromApi(cardName):
 cache = {}
 
 
-def getCardInfo(cardName):
-    if cardName in cache:
-        return cache[cardName]
+def get_card_info(card_name):
+    if card_name in cache:
+        return cache[card_name]
     else:
-        data = getCardFromApi(cardName)
-        cache[cardName] = data
+        data = get_card_from_api(card_name)
+        cache[card_name] = data
         return data
 
 
-def getCardPiece(cardName, piece):
-    return getCardInfo(cardName)[piece]
+def get_card_part(card_name, part):
+    return get_card_info(card_name)[part]
 
 
 def main():
@@ -78,12 +78,12 @@ def main():
     screen = pygame.display.set_mode((800, 500))
     pygame.display.set_caption("MTGSim")
 
-    deck = importDeck()
-    deck = parseDeck(deck)
+    deck = import_deck()
+    deck = parse_deck(deck)
     deck = shuffle(deck)
     deck, hand = draw7(deck)
     print(hand)
-    print(getCardPiece(hand[0], "name"))
+    print(get_card_part(hand[0], "name"))
 
     images = []
     cards = []
