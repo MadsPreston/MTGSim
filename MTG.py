@@ -122,10 +122,21 @@ def get_card_part(card_name, *parts):
         The value at the specified path in the card information.
     """
     data = get_card_info(card_name)
+
     for part in parts:
-        data = data.get(part)
-        if data is None:
-            break
+        if isinstance(data, dict):
+            data = data.get(part)
+        elif isinstance(data, list):
+            try:
+                part = int(part)  # Convert to integer if we are accessing list elements
+                data = data[part]
+            except (ValueError, IndexError):
+                print(f"Invalid index or part for list: {part}")
+                return None
+        else:
+            print(f"Unexpected data type at part '{part}': {type(data)}")
+            return None
+
     return data
 
 
