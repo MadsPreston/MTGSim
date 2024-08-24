@@ -90,13 +90,11 @@ def main():
     deck = parse_deck(deck)
     deck = shuffle(deck)
     deck, hand = drawX(deck, 7)
-    print(hand)
-    print(get_card_part(hand[0], "name"))
 
     images = []
     cards = []
 
-    cardBack = pygame.image.load("C:/Users/maddy/Documents/GitHub/MTGSim/CardBack.jpg").convert()
+    cardBack = pygame.image.load("CardBack.jpg").convert()
     library = cardBack.get_rect()
 
     images.append(cardBack)
@@ -134,7 +132,7 @@ def main():
                             active_box = num
                 if event.button == 3:
                     deck, hand = drawX(deck, 1)
-                    card = hand[len(hand)-1]
+                    card = hand[len(hand) - 1]
                     image = pygame.image.load(
                         (BytesIO(get_card_image(card, "small").content))
                     ).convert()
