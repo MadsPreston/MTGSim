@@ -8,9 +8,13 @@ import requests
 
 def pick_file():
     """Opens a file dialog for text files and returns the path"""
-    return tkinter.filedialog.askopenfilename(
+    path = tkinter.filedialog.askopenfilename(
         title="Select Your Deck", filetypes=[("Text files", "*.txt")]
     )
+    if not path:
+        raise ValueError("No file selected.")
+
+    return path
 
 
 def read_deck(filename):
@@ -35,15 +39,25 @@ def parse_deck(deck):
 
     Returns:
         List with each card name repeated according to its quantity.
+
+    Raises:
+        ValueError: If card quantity is negative or deck is incorrectly formatted.
     """
-    deck = deck.split("\n")
-    deck = list(filter(None, deck))
-    new_deck = []
-    for card in deck:
-        card_properties = card.split()
-        quantity = int(card_properties[0])
-        card_name = " ".join(card_properties[1:])
-        new_deck.extend([card_name] * quantity)
+    try:
+        deck = deck.split("\n")
+        deck = list(filter(None, deck))
+        new_deck = []
+        for card in deck:
+            card_properties = card.split()
+            quantity = int(card_properties[0])
+            card_name = " ".join(card_properties[1:])
+            if quantity <= 0:
+                raise ValueError("Card quantity must be positive.")
+            new_deck.extend([card_name] * quantity)
+    except (ValueError, IndexError):
+        raise ValueError(
+            "Invalid deck format. Please ensure each line has a positive integer followed by a card name."
+        )
     return new_deck
 
 
@@ -86,6 +100,7 @@ def get_card_from_api(card_name):
     """
     card_name = card_name.replace(" ", "+")
     response = requests.get(f"https://api.scryfall.com/cards/named/?exact={card_name}")
+    response.raise_for_status()
     return response.json()
 
 
