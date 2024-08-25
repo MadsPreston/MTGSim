@@ -1,4 +1,5 @@
 import random
+import time
 import tkinter.filedialog
 from io import BytesIO
 
@@ -184,6 +185,25 @@ def fetch_and_add_card(card, cards):
     add_card(image, cards)
 
 
+def turn_card(card):
+    """
+    Rotates a card 90 degrees and updates its rect. Rotates counterclockwise if not already turned,
+    counterclockwise if already turned.
+
+    Args:
+        card (dict): A dictionary representing the card, containing an 'image' surface
+                     and a 'rotated' boolean flag indicating its current orientation.
+    """
+    if card["rotated"]:
+        card["image"] = pygame.transform.rotate(card["image"], 90)
+        card["rotated"] = False
+    else:
+        card["image"] = pygame.transform.rotate(card["image"], -90)
+        card["rotated"] = True
+    # Update bounding box
+    card["rect"] = card["image"].get_rect(center=card["rect"].center)
+
+
 def main():
     pygame.init()
 
@@ -210,6 +230,8 @@ def main():
 
     # Keeping track of dragging
     active_box = None
+    click_time = 1
+    double_click = 0.5
 
     while True:
         # Background
@@ -222,40 +244,32 @@ def main():
 
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # Click and drag cards
-                if event.button == 1:
-                    for (
-                        num,
-                        card,
-                    ) in enumerate(cards):
+                if event.button == 1:  # Left click
+                    for num in reversed(
+                        range(len(cards))
+                    ):  # Reverse range to handle top-most card first
+                        card = cards[num]
                         if card["rect"].collidepoint(event.pos):
-                            active_box = num
-
-                # Turn cards on middle-click
-                if event.button == 2:
-                    for num, card in enumerate(cards):
-                        if card["rect"].collidepoint(event.pos):
-                            if num == 0:
-                                # Do not turn library card
-                                continue
-                            if card["rotated"]:
-                                card["image"] = pygame.transform.rotate(
-                                    card["image"], 90
-                                )
-                                card["rotated"] = False
+                            if (
+                                time.time() - click_time < double_click
+                            ):  # if time between clicks is less than double_click time
+                                if num == 0:
+                                    # Do not turn library card
+                                    continue
+                                turn_card(card)
+                                # Reset click time to prevent extra clicks
+                                click_time = 1
                             else:
-                                card["image"] = pygame.transform.rotate(
-                                    card["image"], -90
-                                )
-                                card["rotated"] = True
-                            # Update bounding box
-                            card["rect"] = card["image"].get_rect(
-                                center=card["rect"].center
-                            )
+                                # Save click time to check if double-clicked
+                                click_time = time.time()
 
-                # Draw cards when right-clicking on deck
-                if event.button == 3:
-                    if cards[0]["rect"].collidepoint(event.pos):
+                            # Set active_box for card dragging
+                            active_box = num
+                            break
+
+                if event.button == 3:  # Right click
+                    if cards[0]["rect"].collidepoint(event.pos):  # On deck
+                        # Draw a card
                         deck, hand = drawX(deck, 1)
                         card = hand[len(hand) - 1]
                         fetch_and_add_card(card, cards)
