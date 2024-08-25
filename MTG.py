@@ -137,51 +137,121 @@ def get_card_part(card_name, *parts):
         The value at the specified path in the card information.
     """
     data = get_card_info(card_name)
+
     for part in parts:
-        data = data.get(part)
-        if data is None:
-            break
+        if isinstance(data, dict):
+            data = data.get(part)
+        elif isinstance(data, list):
+            try:
+                part = int(part)  # Convert to integer if we are accessing list elements
+                data = data[part]
+            except (ValueError, IndexError):
+                print(f"Invalid index or part for list: {part}")
+                return None
+        else:
+            print(f"Unexpected data type at part '{part}': {type(data)}")
+            return None
+
     return data
 
 
-def get_card_image(card_name, size):
+def get_card_image(card_name, size, face_index=None):
     """
     Fetches the image of a card from the Scryfall API based on the card name and image size.
 
     Args:
         card_name (str): The name of the card.
         size (str): The size of the image ("small", "normal", "large", "png", "art_crop", "border_crop").
+        face_index (int, optional): The index of the face to fetch,
+        if the card has multiple faces.
 
     Returns:
         The HTTP response object containing the image.
     """
-    card_url = get_card_part(card_name, "image_uris", size)
-    return requests.get(card_url)
+    if face_index is None:
+        # Single face
+        image_url = get_card_part(card_name, "image_uris", size)
+    else:
+        # Multi-faced
+        image_url = get_card_part(
+            card_name, "card_faces", face_index, "image_uris", size
+        )
+
+    if image_url:
+        response = requests.get(image_url)
+        if response.status_code == 200:
+            return response
+        else:
+            print(f"Failed to fetch image. Status code: {response.status_code}")
+            return None
+    else:
+        print(f"Image URL for {card_name} is None")
+        return None
 
 
-def add_card(image, cards):
+def add_card(card_name, image, cards, face_index=None):
     """
     Adds a card dictionary to the list of cards.
 
     Args:
+        card_name (str): Name of the card being added
         image (Surface): The image of the card.
         cards (list): The list to which the card information will be added.
+        face_index (int, optional): The index of the face being shown,
+        if the card has multiple faces.
     """
-    cards.append({"image": image, "rect": image.get_rect(), "rotated": False})
+    cards.append(
+        {
+            "card_name": card_name,
+            "image": image,
+            "rect": image.get_rect(),
+            "rotated": False,
+            "face_index": face_index,
+        }
+    )
 
 
-def fetch_and_add_card(card, cards):
+def fetch_and_add_card(card_name, cards):
     """
     Fetches a card image and adds a card dictionary to the list of cards.
 
     Args:
-        card (str): The name of the card.
+        card_name (str): The name of the card.
         cards (list): The list to which the card information will be added.
     """
+    card_info = get_card_info(card_name)
+    if "card_faces" in card_info:
+        # Multiple faces, begin with first face
+        face_index = 0
+    else:
+        # Single face
+        face_index = None
     image = pygame.image.load(
-        (BytesIO(get_card_image(card, "small").content))
+        (BytesIO(get_card_image(card_name, "small", face_index).content))
     ).convert()
-    add_card(image, cards)
+    add_card(card_name, image, cards, face_index)
+
+
+def flip_card(card):
+    """Flips a card by changing its face_index and replacing the image.
+
+    Args:
+        card (dict): A dictionary representing a card.
+    """
+    # Check if there even are multiple faces
+    if "card_faces" not in get_card_info(card["card_name"]):
+        return
+    # Get either 0 or 1, whichever face_index isn't currently
+    card["face_index"] = (card["face_index"] + 1) % 2
+    image = pygame.image.load(
+        (
+            BytesIO(
+                get_card_image(card["card_name"], "small", card["face_index"]).content
+            )
+        )
+    ).convert()
+    card["image"] = image
+    card["rect"] = card["image"].get_rect(center=card["rect"].center)
 
 
 def main():
@@ -202,7 +272,7 @@ def main():
     cards = []
 
     # Add the library image to the list of cards
-    add_card(pygame.image.load("CardBack.jpg").convert(), cards)
+    add_card("Library", pygame.image.load("CardBack.jpg").convert(), cards)
 
     # Fetch images and add all cards in hand to cards list
     for card in hand:
@@ -259,6 +329,16 @@ def main():
                         deck, hand = drawX(deck, 1)
                         card = hand[len(hand) - 1]
                         fetch_and_add_card(card, cards)
+
+                if event.button == 5:  # Scroll down
+                    for num in reversed(
+                        range(len(cards))
+                    ):  # Reverse range to handle top-most card first
+                        card = cards[num]
+                        if card["rect"].collidepoint(event.pos):
+                            if num == 0:  # Ignore library card
+                                continue
+                            flip_card(card)
 
             if event.type == pygame.MOUSEMOTION:
                 if active_box is not None:
