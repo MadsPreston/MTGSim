@@ -221,6 +221,9 @@ def main():
             screen.blit(card["image"], card["rect"])
 
         for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # Click and drag cards
                 if event.button == 1:
